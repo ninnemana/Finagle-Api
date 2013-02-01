@@ -8,15 +8,12 @@ import com.twitter.util.Future
 import java.net.InetSocketAddress
 import com.twitter.finagle.builder.{Server, ServerBuilder}
 import com.twitter.finagle.http.Http
+import java.sql.{Connection, DriverManager, ResultSet}
 import util.Properties
+import java.net.InetSocketAddress
 
-/**
- * This example demonstrates a sophisticated HTTP server that handles exceptions
- * and performs authorization via a shared secret. The exception handling and
- * authorization code are written as Filters, thus isolating these aspects from
- * the main service (here called "Respond") for better code organization.
- */
-object HttpServer {
+object HttpServer-bak {
+
   /**
    * A simple Filter that catches exceptions and converts them to appropriate
    * HTTP responses.
@@ -46,12 +43,11 @@ object HttpServer {
    */
   class Authorize extends SimpleFilter[HttpRequest, HttpResponse] {
     def apply(request: HttpRequest, continue: Service[HttpRequest, HttpResponse]) = {
-      continue(request)
-      // if ("open sesame" == request.getHeader("Authorization")) {
-      //   continue(request)
-      // } else {
-      //   Future.exception(new IllegalArgumentException("You don't know the secret"))
-      // }
+      if ("open sesame" == request.getHeader("Authorization")) {
+        continue(request)
+      } else {
+        Future.exception(new IllegalArgumentException("You don't know the secret"))
+      }
     }
   }
 
@@ -60,28 +56,54 @@ object HttpServer {
    */
   class Respond extends Service[HttpRequest, HttpResponse] {
     def apply(request: HttpRequest) = {
+
+       Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver")
+
+    val conn = DriverManager.getConnection("jdbc:sqlserver://srjbmn26rz.database.windows.net;database=CurtDev;user=discounthitch;password=eC0mm3rc3")
+
+    val statement = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)
+    val rs = statement.executeQuery("select distinct y.YearID as year from vcdb_Year y join BaseVehicle bv on y.YearID = bv.YearID join vcdb_Vehicle v on bv.ID = v.BaseVehicleID join vcdb_VehiclePart vp on v.ID = vp.VehicleID order by y.yearID desc")
+    while(rs.next()){
+      println(rs.getDouble("year"))
+    }
+
       val response = new DefaultHttpResponse(HTTP_1_1, OK)
       response.setContent(copiedBuffer("hello world", UTF_8))
       Future.value(response)
     }
   }
 
-  def main(args: Array[String]) {
+  // class ApiService extends Service[HttpRequest, HttpResponse] {
+  //   def apply(req: HttpRequest): Future[HttpResponse] = {
+  //     val response = Response()
+  //     response.setStatusCode(200)
+  //     response.setContentString("Hello world")
+  //     Future(response)
+  //   }
+  // }
+
+
+  def main(args: Array[String]){
     val port = Properties.envOrElse("PORT","8080").toInt
     println("Starting on port: " + port)
+    ServerBuilder()
     val handleExceptions = new HandleExceptions
     val authorize = new Authorize
     val respond = new Respond
-
-    // compose the Filters and Service together:
+    
     val myService: Service[HttpRequest, HttpResponse] = handleExceptions andThen authorize andThen respond
 
     val server: Server = ServerBuilder()
       .codec(Http())
+      .name("hello-server")
       .bindTo(new InetSocketAddress(port))
-      .name("httpserver")
-      .build(myService)
 
-      println("Server started on port: " + port)
+    // val server: Server = ServerBuilder()
+    // .codec(Http())
+    // .name("hello-server")
+    // .bindTo(new InetSocketAddress(port))
+    println("Started")
   }
+
+
 }

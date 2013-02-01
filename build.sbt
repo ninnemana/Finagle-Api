@@ -1,12 +1,12 @@
-import com.typesafe.startscript.StartScriptPlugin
+import com.typesafe.sbt.SbtStartScript
 
-seq(StartScriptPlugin.startScriptForClassesSettings: _*)
+seq(SbtStartScript.startScriptForClassesSettings: _*)
 
 name := "hello"
 
 version := "1.0"
 
-scalaVersion := "2.8.1"
+scalaVersion := "2.9.2"
 
 resolvers += "twitter-repo" at "http://maven.twttr.com"
 
