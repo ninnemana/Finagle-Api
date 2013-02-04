@@ -44,7 +44,13 @@ class Vehicle(year:Double, make:String, model:String, submodel:String, Config:Li
 
 	def getMakes = {
 
-		
+		val dbMakes = table[Makes]("vcdb_Make")
+		val dbBase = table[BaseVehicles]("BaseVehicle")
+		val dbVehicle = table[Vehicles]("vcdb_Vehicle")
+		val dbVehicleParts = table[VehicleParts]("vcdb_VehiclePart")
+
+		val makes = from(dbMakes,dbBase,dbVehicle,dbVehicleParts)((makes,base,vehicle,parts) =>
+			where(base.MakeID === makes.ID and vehicle.BaseVehicleID === base.ID))
 
 		// Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver")
 		// val conn = DriverManager.getConnection("jdbc:sqlserver://srjbmn26rz.database.windows.net;database=CurtDev;user=discounthitch;password=eC0mm3rc3")
