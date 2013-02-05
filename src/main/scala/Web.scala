@@ -94,17 +94,36 @@ object HttpServer {
 				case GET -> Root / "vehicle" =>
 
 					val vehicle = new Vehicle
+					val ids = vehicle.years
 					val l_json = ("ConfigOption" ->
 								("Type" -> "Years") ~
-								("Options" -> vehicle.getYears)) ~
+								("Options" -> ids)) ~
 							("ProductMatch" -> 
-								("Parts" -> vehicle.getParts) ~
-								("Groups" -> vehicle.getGroups))
+								("Parts" -> ids) ~
+								("Groups" -> ids))
 					val json = compact(render(l_json))
 					response.setContent(copiedBuffer(json, UTF_8))
 				case GET -> Root / "vehicle" / year =>
-					var vehicle = new Vehicle(year.toDouble)
-					var json = compact(render(vehicle.getMakes))
+					val vehicle = new Vehicle(year.toDouble)
+					val ids = vehicle.makes
+					val l_json = ("ConfigOption" ->
+								("Type" -> "Makes") ~
+								("Options" -> ids)) ~
+							("ProductMatch" -> 
+								("Parts" -> ids) ~
+								("Groups" -> ids))
+					val json = compact(render(l_json))
+					response.setContent(copiedBuffer(json, UTF_8))
+				case GET -> Root / "vehicle" / year / make =>
+					val vehicle = new Vehicle(year.toDouble, make)
+					val ids = vehicle.models
+					val l_json = ("ConfigOption" ->
+								("Type" -> "Models") ~
+								("Options" -> ids)) ~
+							("ProductMatch" -> 
+								("Parts" -> ids) ~
+								("Groups" -> ids))
+					val json = compact(render(l_json))
 					response.setContent(copiedBuffer(json, UTF_8))
 				case _ =>
 					response.setContent(copiedBuffer("Bad Route",UTF_8))

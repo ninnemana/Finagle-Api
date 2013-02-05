@@ -1,8 +1,9 @@
 package com.curt.database
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import org.squeryl.{Session, SessionFactory}
+import org.squeryl.{Session, SessionFactory,Schema, KeyedEntity, Query}
 import org.squeryl.adapters.MSSQLServer
+import com.curt.vehicle._
 
 trait Database {
 	val dbUsername = "discounthitch"
