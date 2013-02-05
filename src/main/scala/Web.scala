@@ -125,6 +125,17 @@ object HttpServer {
 								("Groups" -> ids))
 					val json = compact(render(l_json))
 					response.setContent(copiedBuffer(json, UTF_8))
+				case GET -> Root / "vehicle" / year / make / model =>
+					val vehicle = new Vehicle(year.toDouble, make,model)
+					val ids = vehicle.submodels
+					val l_json = ("ConfigOption" ->
+								("Type" -> "Submodels") ~
+								("Options" -> ids)) ~
+							("ProductMatch" -> 
+								("Parts" -> ids) ~
+								("Groups" -> ids))
+					val json = compact(render(l_json))
+					response.setContent(copiedBuffer(json, UTF_8))
 				case _ =>
 					response.setContent(copiedBuffer("Bad Route",UTF_8))
 			}
