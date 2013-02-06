@@ -19,6 +19,13 @@ import org.json4s.jackson.JsonMethods._
 import scala.util.DynamicVariable
 import org.squeryl.{Session, SessionFactory}
 import text.Document
+import akka.actor._
+import akka.dispatch.Await
+import akka.dispatch.Future
+import akka.pattern.ask
+import akka.util.Timeout
+import akka.util.duration._
+import akka.japi.Creator
 
 /**
  * This example demonstrates a sophisticated HTTP server that handles exceptions
@@ -87,60 +94,89 @@ object HttpServer {
 		def apply(request: HttpRequest) = {
 			val response = new DefaultHttpResponse(HTTP_1_1, OK)
 
-			request.getMethod -> Path(request.getUri) match {
-				case GET -> Root / "hello" / name =>
-					response.setContent(copiedBuffer("Hello, %s!".format(name), UTF_8))
+			val Pattern = "^(.*)".r
 
+			println(Path(request.getUri))
+
+			request.getMethod -> Path(request.getUri) match {
 				case GET -> Root / "vehicle" =>
 
-					val vehicle = new Vehicle
-					val ids = vehicle.years
+					val system = ActorSystem("VehicleSystem")
+					val vehicleActor = system.actorOf(Props[Vehicle], name = "vehicleActor")
+
+					implicit val timeout = Timeout(5 seconds)
+					val future = vehicleActor ? "years"
+					val years = Await.result(future, timeout.duration).asInstanceOf[List[Int]]
+					
 					val l_json = ("ConfigOption" ->
 								("Type" -> "Years") ~
-								("Options" -> ids)) ~
+								("Options" -> years)) ~
 							("ProductMatch" -> 
-								("Parts" -> ids) ~
-								("Groups" -> ids))
+								("Parts" -> years) ~
+								("Groups" -> years))
 					val json = compact(render(l_json))
 					response.setContent(copiedBuffer(json, UTF_8))
-				case GET -> Root / "vehicle" / year =>
-					val vehicle = new Vehicle(year.toDouble)
-					val ids = vehicle.makes
+				case GET -> Root / "vehicle" / Integer(year) =>
+
+					val system = ActorSystem("VehicleSystem")
+					val vehicleActor = system.actorOf(Props(new Vehicle(year)), name = "vehicleActor")
+
+					implicit val timeout = Timeout(5 seconds)
+					val future = vehicleActor ? "makes"
+					val makes = Await.result(future,timeout.duration).asInstanceOf[List[String]]
+
 					val l_json = ("ConfigOption" ->
 								("Type" -> "Makes") ~
-								("Options" -> ids)) ~
+								("Options" -> makes)) ~
 							("ProductMatch" -> 
-								("Parts" -> ids) ~
-								("Groups" -> ids))
+								("Parts" -> makes) ~
+								("Groups" -> makes))
 					val json = compact(render(l_json))
 					response.setContent(copiedBuffer(json, UTF_8))
-				case GET -> Root / "vehicle" / year / make =>
-					val vehicle = new Vehicle(year.toDouble, make)
-					val ids = vehicle.models
+				case GET -> Root / "vehicle" / Integer(year) / make =>
+
+					val system = ActorSystem("VehicleSystem")
+					val vehicleActor = system.actorOf(Props(new Vehicle(year,make)), name = "vehicleActor")
+
+					implicit val timeout = Timeout(5 seconds)
+					val future = vehicleActor ? "models"
+					val models = Await.result(future,timeout.duration).asInstanceOf[List[String]]
 					val l_json = ("ConfigOption" ->
 								("Type" -> "Models") ~
-								("Options" -> ids)) ~
+								("Options" -> models)) ~
 							("ProductMatch" -> 
-								("Parts" -> ids) ~
-								("Groups" -> ids))
+								("Parts" -> models) ~
+								("Groups" -> models))
 					val json = compact(render(l_json))
 					response.setContent(copiedBuffer(json, UTF_8))
-				case GET -> Root / "vehicle" / year / make / model =>
-					val vehicle = new Vehicle(year.toDouble, make,model)
-					val ids = vehicle.submodels
+				case GET -> Root / "vehicle" / Integer(year) / make / model =>
+
+					val system = ActorSystem("VehicleSystem")
+					val vehicleActor = system.actorOf(Props(new Vehicle(year,make,model)), name = "vehicleActor")
+
+					implicit val timeout = Timeout(5 seconds)
+					val future = vehicleActor ? "submodels"
+					val submodels = Await.result(future,timeout.duration).asInstanceOf[List[String]]
 					val l_json = ("ConfigOption" ->
 								("Type" -> "Submodels") ~
-								("Options" -> ids)) ~
+								("Options" -> submodels)) ~
 							("ProductMatch" -> 
-								("Parts" -> ids) ~
-								("Groups" -> ids))
+								("Parts" -> submodels) ~
+								("Groups" -> submodels))
 					val json = compact(render(l_json))
 					response.setContent(copiedBuffer(json, UTF_8))
+
+				case GET -> Root / "vehicle" / Integer(year) / make / model / submodel =>				
+
+				case GET -> Root / "vehicle" / Integer(year) / make / model / submodel / Pattern =>
+					println("hit")
+
 				case _ =>
+					println(Path(request.getUri).toList)
 					response.setContent(copiedBuffer("Bad Route",UTF_8))
 			}
 
-			Future.value(response)
+			com.twitter.util.Future.value(response)
 		}
 	}
 

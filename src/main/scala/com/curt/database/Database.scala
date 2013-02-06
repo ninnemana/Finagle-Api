@@ -18,7 +18,7 @@ trait Database {
 
 	cpds.setMinPoolSize(1)
 	cpds.setAcquireIncrement(1)
-	cpds.setMaxPoolSize(50)
+	cpds.setMaxPoolSize(100)
 
 	SessionFactory.concreteFactory = Some(() => Session.create(cpds.getConnection, new MSSQLServer))
 
