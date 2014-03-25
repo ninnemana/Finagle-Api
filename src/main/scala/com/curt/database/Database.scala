@@ -6,9 +6,9 @@ import org.squeryl.adapters.MSSQLServer
 import com.curt.vehicle._
 
 trait Database {
-	val dbUsername = "discounthitch"
-	val dbPassword = "eC0mm3rc3"
-	var dbConnection = "jdbc:sqlserver://srjbmn26rz.database.windows.net;database=CurtDev"
+  val dbUsername = ""
+	val dbPassword = ""
+	var dbConnection = "jdbc:sqlserver://;database="
 
 	var cpds = new ComboPooledDataSource
 	cpds.setDriverClass("com.microsoft.sqlserver.jdbc.SQLServerDriver")
